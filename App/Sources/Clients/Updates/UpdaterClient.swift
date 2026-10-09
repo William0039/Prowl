@@ -210,42 +210,46 @@ private func confirmInstallAndRelaunchChoice() -> SPUUserUpdateChoice {
 
 extension UpdaterClient: DependencyKey {
   static let liveValue: UpdaterClient = {
-    let hostBundle = Bundle.main
-    let delegate = SparkleUpdateDelegate()
-    let driver = SilentUpdateDriver(hostBundle: hostBundle)
-    let updater = SPUUpdater(
-      hostBundle: hostBundle,
-      applicationBundle: hostBundle,
-      userDriver: driver,
-      delegate: delegate
-    )
-    do {
-      try updater.start()
-    } catch {
-      updaterLogger.warning("SPUUpdater start failed: \(String(describing: error))")
-    }
-    return UpdaterClient(
-      configure: { checks, checkInBackground in
-        driver.setAutomaticUpdatePreferences(checks: checks)
-        updater.updateCheckInterval = 3600
-        updater.automaticallyChecksForUpdates = checks
-        if checkInBackground, checks {
-          updater.checkForUpdatesInBackground()
-        }
-      },
-      checkForUpdates: {
-        updater.checkForUpdates()
-      },
-      installDownloadedUpdate: {
-        delegate.installDownloadedUpdate()
-      },
-      events: {
-        let (stream, continuation) = AsyncStream.makeStream(of: Event.self)
-        driver.setContinuation(continuation)
-        delegate.setContinuation(continuation)
-        return stream
+    #if DEBUG
+      return testValue
+    #else
+      let hostBundle = Bundle.main
+      let delegate = SparkleUpdateDelegate()
+      let driver = SilentUpdateDriver(hostBundle: hostBundle)
+      let updater = SPUUpdater(
+        hostBundle: hostBundle,
+        applicationBundle: hostBundle,
+        userDriver: driver,
+        delegate: delegate
+      )
+      do {
+        try updater.start()
+      } catch {
+        updaterLogger.warning("SPUUpdater start failed: \(String(describing: error))")
       }
-    )
+      return UpdaterClient(
+        configure: { checks, checkInBackground in
+          driver.setAutomaticUpdatePreferences(checks: checks)
+          updater.updateCheckInterval = 3600
+          updater.automaticallyChecksForUpdates = checks
+          if checkInBackground, checks {
+            updater.checkForUpdatesInBackground()
+          }
+        },
+        checkForUpdates: {
+          updater.checkForUpdates()
+        },
+        installDownloadedUpdate: {
+          delegate.installDownloadedUpdate()
+        },
+        events: {
+          let (stream, continuation) = AsyncStream.makeStream(of: Event.self)
+          driver.setContinuation(continuation)
+          delegate.setContinuation(continuation)
+          return stream
+        }
+      )
+    #endif
   }()
 
   static let testValue = UpdaterClient(
