@@ -19,6 +19,10 @@ worktree, applies the scoped patch and local tooling, runs `make check` and `mak
 the Debug app. A conflict or failed check stops before changing any installed app.
 The failed worktree is retained for diagnosis; do not force-apply a conflicting patch.
 
+Releases predating the upstream repository-icon lint fix receive that official commit
+before checks. Once a release contains it, the script skips the compatibility backport.
+No lint rules or failed tests are bypassed.
+
 Successful builds live under `~/Library/Application Support/Prowl-Amp-Fork/versions/`.
 Run the printed `launch.sh` to use a separate data directory and CLI socket. Use only
 one custom Debug instance at a time. Exit that instance normally before switching

@@ -29,6 +29,11 @@ if ! git -C "$worktree" cherry-pick "${patch_commits[@]}"; then
   echo "No installed application was changed." >&2
   exit 1
 fi
+# This upstream fix makes pre-merge releases compatible with SwiftLint 0.65.1.
+compatibility_fix=8ebd4006ddcfa69cee5e9ac61b41c289c0e35b67
+if ! git -C "$root" merge-base --is-ancestor "$compatibility_fix" "$version"; then
+  git -C "$worktree" cherry-pick "$compatibility_fix"
+fi
 git -C "$root" diff "$fix" "$maintenance" -- \
   App/Sources/Clients/Updates/UpdaterClient.swift scripts/build-amp-fork.sh docs/local-amp-fork.md \
   | git -C "$worktree" apply --index
